@@ -221,6 +221,7 @@ The EmptyAuthorizationsProvider will always return an empty Authorizations objec
 There is a more useful implementation of AuthorizationsProvider that will be explored in more detail in the next section:
 
 * ```geomesa.tutorial.LdapAuthorizationsProvider```
+* ```geomesa.tutorial.LdapAuthorizationsProviderTest```
 
 Additionally, there are two helper classes included in the tutorial:
 
@@ -363,4 +364,71 @@ In order to do that, we will use Apache Directory Studio.
 
 #### Test LDAP Connection Using Tutorial Code
 
-The 
+The tutorial code includes an AuthorizationsProvider implementation that will connect to LDAP to retrieve authorizations: 
+
+* ```geomesa.tutorial.LdapAuthorizationsProvider```
+
+The provider will configure itself based on the 'geomesa-ldap.properties' file on the classpath (under src/main/resources):
+
+{% highlight properties %}
+# ldap connection properties
+java.naming.factory.initial=com.sun.jndi.ldap.LdapCtxFactory
+java.naming.provider.url=ldap://localhost:10389
+java.naming.security.authentication=simple
+java.naming.security.principal=uid=admin,ou=system
+java.naming.security.credentials=secret
+
+# the ldap node to start the query from
+geomesa.ldap.search.root=o=Spring Framework
+# the query that will be applied to find the user's record
+# the '{}' will be replaced with the common name from the certificate the user has logged into geoserver with
+geomesa.ldap.search.filter=(&(objectClass=person)(cn={}))
+# the ldap attribute that holds the comma-delimited authorizations for the user
+geomesa.ldap.auths.attribute=employeeType
+{% endhighlight %}
+
+The default file included with the tutorial will connect to the LDAP instance we set up in the previous steps. If you are using a different LDAP configuration,
+you will need to modify that file appropriately.
+
+The LdapAuthorizationsProvider will look for a particular LDAP attribute that stores the user's authorizations in a comma-delimited list.'
+For this tutorial, we have re-purposed an existing attribute, 'employeeType'. The attribute to use can be modified through the property file.
+
+When we inserted the 'rod' record into LDAP, we set his employeeType to 'user,admin', corresponding to our Accumulo authorizations.
+If you are using different authorizations, you will need to update the attribute to match.
+
+The tutorial code includes a test case for connecting to LDAP:
+
+* ```geomesa.tutorial.LdapAuthorizationsProviderTest```
+
+Once you have modified geomesa-ldap.properties to connect to your LDAP, you can test the connection by building the project and running the test class: 
+
+{% highlight bash %}
+mvn clean install
+
+java -cp ./target/geomesa-tutorial-authorizations-1.0.jar \
+   geomesa.tutorial.LdapAuthorizationsProviderTest
+{% endhighlight %}
+
+You should get the following output:
+
+{% highlight bash %}
+Retrieved auths from LDAP: user,admin
+{% endhighlight %}
+
+#### Installing the LDAP AuthorizationProvider in GeoServer
+
+The tutorial code includes a service provider registry in the META-INF.services folder. By default, 
+the provider class is specified as the EmptyAuthorizationsProvider.
+
+1. Ensure that you ldap configuration is correct by running the LdapAuthorizationsProviderTest, as described above.
+2. Change the provider class to be ```geomesa.tutorial.LdapAuthorizationsProvider``` in 'src/main/resources/META-INF/services/geomesa.core.security.AuthorizationsProvider'
+3. Re-build the tutorial jar and install the **unshaded** jar in GeoServer:
+
+{% highlight bash %}
+mvn clean install
+cp ./target/original-geomesa-tutorial-authorizations-1.0.jar \
+   /path/to/tomcat/webapps/geoserver/WEB-INF/lib/
+{% endhighlight %}
+
+
+
