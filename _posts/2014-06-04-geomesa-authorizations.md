@@ -6,15 +6,23 @@ layout: tutorial
 
 {% include tutorial-header.html %}
 
+<!-- add some style to fix the xml formatting color -->
+<style>
+code.xml { color:#93a1a1 }
+</style>
+
 ### Background
 
-One of the most powerful features of Accumulo is the ability to apply cell-level ```visibilities``` to you data. 
-A set of ```authorizations``` can be applied to your queries, which will limit the data returned based on visibility.
+One of the most powerful features of Accumulo is the implementation of cell-level security, using
+```visibilities``` and ```authorizations```. Data that is protected by visibilities can only be seen
+by users that have the corresponding authorizations. This allows for the fine-grained protection of
+data, based on arbitrary labels.
 
 *Note: authorizations are distinct from table-level permissions, and operate at a much finer grain.*
 
-Full details on authorizations can be seen in the [Accumulo](http://accumulo.apache.org/1.5/accumulo_user_manual.html#_security) documentation,
-with more examples [here](http://accumulo.apache.org/1.5/examples/visibility.html).
+If you are not familiar with Accumulo authorizations, you should review the relevant Accumulo
+[documentation](http://accumulo.apache.org/1.5/accumulo_user_manual.html#_security), with more
+examples [here](http://accumulo.apache.org/1.5/examples/visibility.html).
 
 ### This tutorial will show you how to:
 
@@ -37,7 +45,87 @@ Before you begin, you should also have these:
 * Apache Maven installed
 * a GitHub client installed
 
+### GeoMesa Implementation Details - Visibilities
+
+Currently GeoMesa supports applying a single set of visibilities to all data in a DataStore. When
+configuring a DataStore, the visibilities can be set with the ```visibility``` parameter:
+
+{% highlight java %}
+// create a map containing initialization data for the GeoMesa data store
+Map<String, String> configuration = ...
+configuration.put("visibility", "user&admin");
+DataStore dataStore = DataStoreFinder.getDataStore(configuration);
+{% endhighlight %}
+
+Any data written by this DataStore will have the visibilities 'user&admin' applied.
+
+Future versions of GeoMesa will allow visibilities to be applied at a more granular level.
+
+### GeoMesa Implementation Details - Authorizations
+
+When performing a query, GeoMesa delegates the retrieval of authorizations to ```service providers``` that
+implement the following interface:
+
+{% highlight java %}
+package geomesa.core.security;
+
+public interface AuthorizationsProvider {
+
+    /**
+     * Gets the authorizations for the current context. This may change over time (e.g. in a
+     * multi-user environment), so the result should not be cached.
+     *
+     * @return
+     */
+    public Authorizations getAuthorizations();
+
+    /**
+     * Configures this instance with parameters passed into the DataStoreFinder
+     *
+     * @param params
+     */
+    public void configure(Map<String, Serializable> params);
+}
+{% endhighlight %}
+
+When a GeoMesa DataStore is instantiated, it will scan for available service providers.
+Third-party implementations can be enabled by simply placing them in the classpath. See the Oracle
+[javadocs](http://docs.oracle.com/javase/7/docs/api/javax/imageio/spi/ServiceRegistry.html) for
+details on implementing a service provider.
+
+The GeoMesa DataStore will call 'configure' on the AuthorizationsProvider implementation, passing in
+the parameter map from the call to 'DataStoreFinder.getDataStore(Map params)'. This allows the
+AuthorizationsProvider to configure itself based on the environment.
+
+To ensure that the correct AuthorizationsProvider is used, GeoMesa will throw an exception if multiple
+third-party service providers are found on the classpath. In this scenario, the particular service
+provider class to use can be specified by the following system property:
+
+{% highlight java %}
+geomesa.core.security.AuthorizationsProvider.AUTH_PROVIDER_SYS_PROPERTY = "geomesa.auth.provider.impl";
+{% endhighlight %}
+
+For simple scenarios, the set of authorizations to apply to all queries can be specified when creating
+the GeoMesa DataStore by using the 'auths' configuration parameter. This will use the
+DefaultAuthorizationsProvider implementation provided by GeoMesa.
+
+{% highlight java %}
+// create a map containing initialization data for the GeoMesa data store
+Map<String, String> configuration = ...
+configuration.put("auths", "user,admin");
+DataStore dataStore = DataStoreFinder.getDataStore(configuration);
+{% endhighlight %}
+
+If there are no AuthorizationsProviders found on the classpath, and the 'auths' parameter is not set, GeoMesa will default to
+using the authorizations associated with the Accumulo connection (i.e. the 'user' configuration value).
+
+```Note: this is not a recommended approach for a production system.```
+
+In addition, please note that the authorizations used in any scenario cannot exceed the authorizations of the Accumulo connection.
+
 ### Ingest GDELT Data with Visibilities
+
+The rest of this tutorial will use the GDELT data set.
 
 If you have never ingested GDELT data, or you have previously ingested it **without** visibilities, you will need to ingest it again.
 Follow the instructions [here](/2014/04/17/geomesa-gdelt-analysis/), with the following changes:
@@ -48,8 +136,6 @@ Follow the instructions [here](/2014/04/17/geomesa-gdelt-analysis/), with the fo
 {% highlight bash %}
    -visibility <visibility-label-string>
 {% endhighlight %}
-
-**Note: You will need to go through the entire GDELT tutorial, including the GeoServer setup, before attempting the GeoServer authorizations section of this tutorial.**
 
 The entire command will be as follows:
 
@@ -65,8 +151,8 @@ hadoop jar /path/to/geomesa-gdelt-1.0-SNAPSHOT.jar \
 {% endhighlight %}
 
 The visibility string can be anything valid for your Accumulo instance. For the rest of this exercise,
-we are going to assume the visibility string is 'user'. You can see the visibilities that are currently
-enabled for your user through the accumulo shell:
+we are going to assume the visibility string is 'user', and the Accumulo table is 'gdelt_auths'. You
+can see the visibilities that are currently enabled for your user through the accumulo shell:
 
 {% highlight bash %}
 $ accumulo shell -u myuser -p mypassword
@@ -83,7 +169,8 @@ myuser@mycloud> getauths
 user,admin
 {% endhighlight %}
 
-If your user does not already have authorizations, you can add them as follows:
+If your user does not already have authorizations, you can add them through the Accumulo shell with the 'addauths' command:
+
 *Note: A user cannot set authorizations unless the user has the System.ALTER_USER permission*
 
 {% highlight bash %}
@@ -94,7 +181,7 @@ myuser@mycloud> getauths
 user,admin
 {% endhighlight %}
 
-Once the GDELT data is ingested, you should see a visibility label when you scan the table:
+Once the GDELT data is ingested, you should see a visibility label in square brackets when you scan the table through the Accumulo shell:
 
 {% highlight bash %}
 myuser@mycloud> table gdelt_auths
@@ -110,7 +197,12 @@ Pick a reasonable directory on your machine, and run:
 git clone git@github.com:geomesa/geomesa-tutorial-authorizations.git
 {% endhighlight %}
 
-The ```pom.xml``` file contains an explicit list of dependent libraries that will be bundled together into the final tutorial. You should confirm that the versions of Accumulo and Hadoop match what you are running; if it does not match, change the value in the POM. (NB: The only reason these libraries are bundled into the final JAR is that this is easier for most people to do this than it is to set the classpath when running the tutorial. If you would rather not bundle these dependencies, mark them as provided in the POM, and update your classpath as appropriate.)
+The ```pom.xml``` file contains an explicit list of dependent libraries that will be bundled together
+into the final tutorial. You should confirm that the versions of Accumulo and Hadoop match what you
+are running; if it does not match, change the value in the POM. (NB: The only reason these libraries
+are bundled into the final JAR is that this is easier for most people to do this than it is to set
+the classpath when running the tutorial. If you would rather not bundle these dependencies, mark
+them as provided in the POM, and update your classpath as appropriate.)
 
 From within the root of the cloned tutorial, run:
 
@@ -141,7 +233,7 @@ where you provide the following arguments:
 * ```<zoos>``` - comma-separated list of your Zookeeper nodes, e.g. zoo1:2181,zoo2:2181,zoo3:2181
 * ```<user>``` - the name of an Accumulo user that will execute the scans, e.g. root
 * ```<pwd>``` - the password for the previously-mentioned Accumulo user
-* ```<table>``` - the name of the Accumulo table that has the GeoMesa GDELT dataset, e.g. gdelt
+* ```<table>``` - the name of the Accumulo table that has the GeoMesa GDELT dataset, e.g. gdelt_auths
 * ```<feature>``` - the feature name used to ingest the GeoMesa GDELT dataset, e.g. gdelt
 
 You should see two queries run and the results printed out to your console. You should see output similar to the following:
@@ -155,42 +247,8 @@ Executing query with UNAUTHORIZED data store: auths are ''
 No results
 {% endhighlight %}
 
-The first query should return 1 or more results. The second query should return 0 results, since they are hidden by visibilities.
-
-### AuthorizationsProvider
-
-GeoMesa delegates the retrieval of authorizations to service providers that implement the following interface:
-
-{% highlight java %}
-geomesa.core.security.AuthorizationsProvider
-{% endhighlight %}
-
-When a GeoMesa DataStore is instantiated, it will scan the classpath for service providers. Third-party implementations
-can be enabled by simply placing them in the classpath. See the Oracle [javadocs](http://docs.oracle.com/javase/7/docs/api/javax/imageio/spi/ServiceRegistry.html) for details on implementing a service provider.
-
-To ensure that the correct AuthorizationsProvider is used, GeoMesa will throw an exception if multiple service providers are found
-on the classpath. In this scenario, the particular service provider class to use can be specified by the following system property:
-
-{% highlight java %}
-geomesa.core.security.AuthorizationsProvider.AUTH_PROVIDER_SYS_PROPERTY = "geomesa.auth.provider.impl";
-{% endhighlight %}
-
-For simple scenarios, the set of authorizations to apply to all queries can be specified when creating
-the GeoMesa DataStore by using the 'auths' configuration parameter. This will use the DefaultAuthorizationsProvider implementation provided by GeoMesa.
-
-{% highlight java %}
-// create a map containing initialization data for the GeoMesa data store
-Map<String, String> configuration = ...
-configuration.put("auths", "user,admin");
-DataStore dataStore = DataStoreFinder.getDataStore(configuration);
-{% endhighlight %}
-
-If there are no AuthorizationsProviders found on the classpath, and the 'auths' parameter is not set, GeoMesa will default to
-using the authorizations associated with the Accumulo connection (i.e. the 'user' configuration value).
-
-```Note: this is not a recommended approach for a production system.```
-
-In addition, please note that the authorizations used in any scenario cannot exceed the authorizations of the Accumulo connection.
+The first query should return 1 or more results. The second query should return 0 results, since
+they are hidden by visibilities.
 
 ### Insight Into How the Tutorial Works
 
@@ -214,78 +272,120 @@ This code snippet shows how you can specify the AuthorizationProvider to use wit
 The DefaultAuthorizationsProvider class is provided by GeoMesa, and used when no other implementations are found.
 The EmptyAuthorizationsProvider class is included in the tutorial:
 
-* ```geomesa.tutorial.EmptyAuthorizationsProvider```
+{% highlight java %}
+geomesa.tutorial.EmptyAuthorizationsProvider
+{% endhighlight %}
 
-The EmptyAuthorizationsProvider will always return an empty Authorizations object, which means that any data stored with visibilities will not be returned.
+The EmptyAuthorizationsProvider will always return an empty Authorizations object, which means that
+any data stored with visibilities will not be returned.
 
 There is a more useful implementation of AuthorizationsProvider that will be explored in more detail in the next section:
 
-* ```geomesa.tutorial.LdapAuthorizationsProvider```
-* ```geomesa.tutorial.LdapAuthorizationsProviderTest```
+{% highlight java %}
+geomesa.tutorial.LdapAuthorizationsProvider
+geomesa.tutorial.LdapAuthorizationsProviderTest
+{% endhighlight %}
 
 Additionally, there are two helper classes included in the tutorial:
 
 * ```geomesa.tutorial.GdeltFeature``` - Contains the attributes available in the GDELT data set.
 * ```geomesa.tutorial.SetupUtil``` - Handles reading command-line arguments
 
-### Applying Visibilities to GeoServer using PKIs and LDAP 
+### Applying Authorizations and Visibilities to GeoServer using PKIs and LDAP 
 
-This section will show you how to configure GeoServer to authenticate users with PKIs, use LDAP to store visibilities, then apply visibilities on a per-user basis.
+This section will show you how to configure GeoServer to authenticate users with PKIs, use LDAP to
+store authorizations, then apply authorizations on a per-user/per-query basis.
 
-```Note: It is assumed for the rest of the tutorial that you have created the GeoServer data stores and layers outlined in the [GDELT tutorial](/2014/04/17/geomesa-gdelt-analysis/)```
+Basic user authentication will take place via user-certificates. Each user would have their own public/private
+key pair that uniquely identifies them.
+
+User authorizations will come from LDAP. Once a user's identity has been verified via PKI, we will
+look up the user's details in LDAP.
+
+Once we have a user's authentication and authorizations, we will apply them to the GeoMesa query using
+a custom AuthorizationsProvider implementation.
+
+```Note:``` **It is assumed for the rest of the tutorial that you have created the GeoServer
+data stores and layers outlined in the [GDELT tutorial](/2014/04/17/geomesa-gdelt-analysis/)**
 
 #### Run GeoServer in Tomcat
 
-**Note: If you are already running GeoServer in Tomcat, you can skip this step.**
+*Note: If you are already running GeoServer in Tomcat, you can skip this step.*
 
 GeoServer ships by default with an embedded Jetty servlet. In order to use PKI login, we need to install it in Tomcat instead.
 
-1. Download and install [Tomcat 7](http://tomcat.apache.org/download-70.cgi)
-2. Create an environment variable pointing to your tomcat installation:
-(note: you may want to add this to your bash init scripts)
+<!-- we have to use markup here b/c markdown doesn't support nested html in lists - numbers re-start at 1 -->
+<ol>
+<li>
+Download and install <a href='http://tomcat.apache.org/download-70.cgi'>Tomcat 7</a>.
+</li>
 
+<li>
+Create an environment variable pointing to your tomcat installation (you may want to add this to your bash init scripts):
 {% highlight bash %}
 export CATALINA_HOME=/path/to/tomcat
 {% endhighlight %}
+</li>
 
-3. IF you want to re-use your existing GeoServer configuration, create an environment variable pointing to your GeoServer data directory:
-(note: you may want to add this to your bash init scripts)
-
+<li>
+If you want to re-use your existing GeoServer configuration, create an environment variable pointing to your GeoServer data directory
+(you may want to add this to your bash init scripts):
 {% highlight bash %}
 export GEOSERVER_DATA_DIR=/path/to/geoserver/data_dir
 {% endhighlight %}
+</li>
 
-4. Copy the GeoServer webapp from the GeoServer distribution into the tomcat servlet:
+<li>
+Copy the GeoServer webapp from the GeoServer distribution into the tomcat servlet:
 
 {% highlight bash %}
 cp -r /path/to/geoserver/webapps/geoserver/ $CATALINA_HOME/webapps/
 {% endhighlight %}
+</li>
 
-5. Increase the memory allocated to tomcat, which you will need for running complex queries in GeoServer:
-(note: the values here may not be applicable for every installation)
+<li>
+Increase the memory allocated to tomcat, which you will need for running complex queries in GeoServer
+(the values here may not be applicable for every installation):
 
 {% highlight bash %}
 cd $CATALINA_HOME/bin
 echo 'CATALINA_OPTS="-Xmx2g -XX:MaxPermSize=128m"' >> setenv.sh
 {% endhighlight %}
+</li>
 
-6. Start tomcat, either as a service or through the start scripts, and ensure that GeoServer is available at [http://localhost:8080/geoserver/web/]
+<li>
+Start tomcat, either as a service or through the start scripts, and ensure that GeoServer is available at <a href='http://localhost:8080/geoserver/web/'>http://localhost:8080/geoserver/web/</a>
+</li>
+
+</ol>
+
+#### Create the Accumulo Data Store and Layer in GeoServer
+
+If you haven't already, create an AccumuloDataStore and associated Layer pointing to the data with
+visibilities, as described in the [GDELT tutorial](/2014/04/17/geomesa-gdelt-analysis/).
+
+When configuring the DataStore, leave the 'auths' field empty and set the 'visibility' field to what
+you used when ingesting data above.
 
 #### Congfigure GeoServer for PKI Login
 
-Follow the instructions located [here](http://docs.geoserver.org/stable/en/user/security/tutorials/cert/index.html) in order to enable PKI login to GeoServer.
+Follow the instructions located [here](http://docs.geoserver.org/stable/en/user/security/tutorials/cert/index.html)
+in order to enable PKI login to GeoServer.
 
-In the step where you add the 'cert' filter to the 'Filter Chains', also add it to the 'rest', 'gwc' and 'default' chains (in addition to web).
+In the step where you add the 'cert' filter to the 'Filter Chains', also add it to the 'rest', 'gwc'
+and 'default' chains (in addition to web).
 
-For the rest of the tutorial, we will assume that the user is logged in as 'rod', from the sample PKIs.
+We will be using the 'rod' and 'scott' users, so be sure to install those into your browser..
 
-**Note: There is a bug in the current version of GeoServer (2.5.1) that sometimes does not save authentication filters properly.**
+*Note: There is a bug in the current version of GeoServer (2.5.1) that sometimes does not save
+authentication filters properly.*
 
 If, after going through the above steps, you do not get logged in properly, do the following:
 
-1. Shut down GeoServer
-2. Navigate to the GeoServer data directory ($GEOSERVER_DATA_DIR or $GEOSERVER_HOME/data_dir)
-3. Edit the file ./security/config.xml by adding 4 lines:
+<ol>
+<li>Shut down GeoServer</li>
+<li>Navigate to the GeoServer data directory ($GEOSERVER_DATA_DIR or $GEOSERVER_HOME/data_dir)</li>
+<li>Edit the file ./security/config.xml by adding 4 lines:
 
 {% highlight xml %}
 <filterChain>
@@ -312,17 +412,21 @@ If, after going through the above steps, you do not get logged in properly, do t
   </filters>
 </filterChain>
 {% endhighlight %}
+</li>
 
-4. Re-start GeoServer
-5. Verify that the 'web' filter chain has the 'cert' filter selected:
-
-!["Web Filter Panel"](/img/tutorials/2014-06-04-geomesa-authorizations/cert9.jpg)
+<li>Re-start GeoServer</li>
+<li>Verify that the 'web' filter chain has the 'cert' filter selected:
+    <p><img src="/img/tutorials/2014-06-04-geomesa-authorizations/cert9.jpg" alt="Web Filter Panel"></p>
+</li>
+</ol>
 
 #### Install an LDAP Server for Storing Authorizations
 
-**Note: If you are already have an LDAP server to use, you can skip this step.**
 
-1. Download and install [ApacheDS](http://directory.apache.org/apacheds/downloads.html)
+
+*Note: If you are already have an LDAP server set up, you can skip this step.*
+
+1. Download and install [ApacheDS](http://directory.apache.org/apacheds/)
 2. Either run as a service, or run through the start scripts:
 
 {% highlight bash %}
@@ -339,27 +443,27 @@ We want to configure LDAP with a user to match the Spring Security PKIs we are t
 
 In order to do that, we will use Apache Directory Studio.
 
-1. Download and run [Apache Directory Studio](http://directory.apache.org/studio/downloads.html)
+1. Download and run [Apache Directory Studio](http://directory.apache.org/studio/)
 2. Connect to the your LDAP instance (ApacheDS), using the instructions [here](http://directory.apache.org/apacheds/basic-ug/1.4.2-changing-admin-password.html)
 (note: you do not need to change the password unless you want to)
 3. Create a partition for our data:
-    a. Right-click the 'ApacheDS (localhost)' entry under the 'Connection' tab and select 'Open Configuration'
-    b. Click 'Advanced Partitions Configuration...'
-    c. Click 'Add'
-    d. Set the ID field to be 'Spring Framework'
-    e. Set the Suffix field to be 'o=Spring Framework'
-    f. Uncheck 'Auto-generate context entry from suffix DN'
-    g. Set the following attributes in Context Entry:
-        objectclass: extensibleObject
-        objectclass: top
-        objectclass: domain
-        dc: Spring Framework2
-        o: Spring Framework2
-    h. Hit ctrl-S to save the partition
-    !["ApacheDS Partition"](/img/tutorials/2014-06-04-geomesa-authorizations/apache-ds-partition.png)
+    1. Right-click the 'ApacheDS (localhost)' entry under the 'Connection' tab and select 'Open Configuration'
+    2. Click 'Advanced Partitions Configuration...'
+    3. Click 'Add'
+    4. Set the ID field to be 'Spring Framework'
+    5. Set the Suffix field to be 'o=Spring Framework'
+    6. Uncheck 'Auto-generate context entry from suffix DN'
+    7. Set the following attributes in Context Entry:
+        * objectclass: extensibleObject
+        * objectclass: top
+        * objectclass: domain
+        * dc: Spring Framework2
+        * o: Spring Framework2
+    8. Hit ctrl-s to save the partition
+    ![ApacheDS Partition](/img/tutorials/2014-06-04-geomesa-authorizations/apache-ds-partition.png)
 4. **Re-start ApacheDS** - otherwise the partition will not be available and the LDIF import will fail.
 5. Load the following LDIF file, which will create the Spring Security OU and the rod user:
-    a. Right-click THe 'Root DSE' node in the LDAP browser, and select 'Import->LDIF import...'
+    * Right-click the 'Root DSE' node in the LDAP browser, and select 'Import->LDIF import...'
     [Spring Security LDIF](/assets/tutorials/2014-06-04-geomesa-authorizations/spring-security-rod.ldif)
 
 #### Test LDAP Connection Using Tutorial Code
@@ -388,41 +492,53 @@ geomesa.ldap.auths.attribute=employeeType
 {% endhighlight %}
 
 The default file included with the tutorial will connect to the LDAP instance we set up in the previous steps. If you are using a different LDAP configuration,
-you will need to modify that file appropriately.
+you will need to modify the file appropriately.
 
-The LdapAuthorizationsProvider will look for a particular LDAP attribute that stores the user's authorizations in a comma-delimited list.'
-For this tutorial, we have re-purposed an existing attribute, 'employeeType'. The attribute to use can be modified through the property file.
+The LdapAuthorizationsProvider will look for a particular LDAP attribute that stores the user's
+authorizations in a comma-delimited list. For simplicity, in this tutorial we have re-purposed an
+existing attribute, ```employeeType```. The attribute to use can be modified through the property file.
 
-When we inserted the 'rod' record into LDAP, we set his employeeType to 'user,admin', corresponding to our Accumulo authorizations.
-If you are using different authorizations, you will need to update the attribute to match.
+When we inserted the 'rod' record into LDAP, we set his employeeType to 'user,admin', corresponding
+to our Accumulo authorizations. If you are using different authorizations, you will need to update
+the attribute to match.
 
 The tutorial code includes a test case for connecting to LDAP:
 
 * ```geomesa.tutorial.LdapAuthorizationsProviderTest```
 
-Once you have modified geomesa-ldap.properties to connect to your LDAP, you can test the connection by building the project and running the test class: 
+Once you have modified geomesa-ldap.properties to connect to your LDAP, you can test the connection
+by building the project and running the test class: 
 
 {% highlight bash %}
 mvn clean install
 
 java -cp ./target/geomesa-tutorial-authorizations-1.0.jar \
-   geomesa.tutorial.LdapAuthorizationsProviderTest
+   geomesa.tutorial.LdapAuthorizationsProviderTest rod
 {% endhighlight %}
+
+Where the argument to the program is the user to retrieve authorizations for.
 
 You should get the following output:
 
 {% highlight bash %}
-Retrieved auths from LDAP: user,admin
+Checking auths from LDAP for user 'rod'
+Retrieved auths: user,admin
 {% endhighlight %}
 
 #### Installing the LDAP AuthorizationProvider in GeoServer
 
-The tutorial code includes a service provider registry in the META-INF.services folder. By default, 
+In order to use the LdapAuthorizationsProvider, we need to install it as a service provider into
+GeoServer, where it will automatically be picked up by GeoMesa.
+
+The tutorial code includes a service provider registry in the META-INF/services folder. By default, 
 the provider class is specified as the EmptyAuthorizationsProvider.
 
-1. Ensure that you ldap configuration is correct by running the LdapAuthorizationsProviderTest, as described above.
-2. Change the provider class to be ```geomesa.tutorial.LdapAuthorizationsProvider``` in 'src/main/resources/META-INF/services/geomesa.core.security.AuthorizationsProvider'
-3. Re-build the tutorial jar and install the **unshaded** jar in GeoServer:
+<ol>
+<li>Ensure that you ldap configuration is correct by running the LdapAuthorizationsProviderTest, as
+described above.</li>
+<li>Change the provider class in 'src/main/resources/META-INF/services/geomesa.core.security.AuthorizationsProvider'
+to be <code>geomesa.tutorial.LdapAuthorizationsProvider</code></li>
+<li>Re-build the tutorial jar and install the <b>unshaded original</b> jar in GeoServer:
 
 {% highlight bash %}
 mvn clean install
@@ -430,5 +546,30 @@ cp ./target/original-geomesa-tutorial-authorizations-1.0.jar \
    /path/to/tomcat/webapps/geoserver/WEB-INF/lib/
 {% endhighlight %}
 
+<i>Note: we want to use the unshaded jar since all the required dependencies are already installed in GeoServer.</i>
+</li>
+<li>Re-start GeoServer (or start it if not running)</li>
+</ol>
 
+At this point you should have everything configured and in-place.
 
+#### Verifying the LDAP Authorizations in GeoServer
+
+In order to verify that the authorizations are working correctly, execute a query against GeoMesa by
+calling the WMS provider in your browser:
+
+{% highlight bash %}
+https://localhost:8443/geoserver/wms?service=WMS&version=1.1.0&request=GetMap&layers=geomesa:gdelt_auths&styles=&bbox=31.6,44,37.4,47.75&width=1200&height=600&srs=EPSG:4326&format=application/openlayers&TIME=2013-01-01T00:00:00.000Z/2014-04-30T23:00:00.000Z
+{% endhighlight %}
+
+When prompted, select the 'rod' certificate.
+
+You should see the normal data come back, with many red points indicating the results:
+
+![Authorized Results](/img/tutorials/2014-06-04-geomesa-authorizations/Ukraine_Unfiltered.png)
+
+Now try the same query, but use the 'scott' certificate. This time, there should be no data returned,
+as scott does not have any authorizations set up in LDAP.
+
+*Note: a simple way to use different certificates at once is to open multiple 'incognito' or
+'private' browser windows.*
