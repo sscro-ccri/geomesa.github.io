@@ -556,7 +556,7 @@ At this point you should have everything configured and in-place.
 #### Verifying the LDAP Authorizations in GeoServer
 
 In order to verify that the authorizations are working correctly, execute a query against GeoMesa by
-calling the WMS provider in your browser:
+calling the WMS provider *over https* in your browser:
 
 {% highlight bash %}
 https://localhost:8443/geoserver/wms?service=WMS&version=1.1.0&request=GetMap&layers=geomesa:gdelt_auths&styles=&bbox=31.6,44,37.4,47.75&width=1200&height=600&srs=EPSG:4326&format=application/openlayers&TIME=2013-01-01T00:00:00.000Z/2014-04-30T23:00:00.000Z
@@ -564,12 +564,12 @@ https://localhost:8443/geoserver/wms?service=WMS&version=1.1.0&request=GetMap&la
 
 When prompted, select the 'rod' certificate.
 
-You should see the normal data come back, with many red points indicating the results:
+You should see the normal data come back, with many red points indicating the data:
 
 ![Authorized Results](/img/tutorials/2014-06-04-geomesa-authorizations/Ukraine_Unfiltered.png)
 
 Now try the same query, but use the 'scott' certificate. This time, there should be no data returned,
-as scott does not have any authorizations set up in LDAP.
+as the 'scott' user does not have any authorizations set up in LDAP.
 
 *Note: a simple way to use different certificates at once is to open multiple 'incognito' or
 'private' browser windows.*
