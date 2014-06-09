@@ -13,6 +13,8 @@ code.xml { color:#93a1a1 }
 
 ### Background
 
+#### Visibilities and Authorizations
+
 One of the most powerful features of Accumulo is the implementation of cell-level security, using
 ```visibilities``` and ```authorizations```. Data that is protected by visibilities can only be seen
 by users that have the corresponding authorizations. This allows for the fine-grained protection of
@@ -24,11 +26,26 @@ If you are not familiar with Accumulo authorizations, you should review the rele
 [documentation](http://accumulo.apache.org/1.5/accumulo_user_manual.html#_security), with more
 examples [here](http://accumulo.apache.org/1.5/examples/visibility.html).
 
+#### PKI
+
+Public key infrastructure can be used to securely authenticate end users. In PKI, a ```certificate
+authority``` (CA) will issue digital certificates that verify that a particular public key belongs to a
+particular individual. Other users can then trust that certificate because it has been digitally
+signed by the CA.
+
+In this tutorial, the keys used are not provided by trusted CAs. As such, it is necessary to import
+the CA's certificate into the Java keystore, which allows Java (and by extension Tomcat) to trust
+any keys verified by the CA.
+
+PKI solves the issue of ```authentication``` (*who* a user is) but not ```authorization``` (*what* a
+user can do). For this tutorial, authorization is provided by an LDAP server.
+
 ### This tutorial will show you how to:
 
 1.  Set visibilities on your data during ingestion through GeoMesa
 2.  Apply authorizations to your queries through GeoMesa
-3.  Implement user authorizations through the GeoMesa GeoServer plugin, using PKI certs to login to GeoServer and LDAP to store authorizations
+3.  Implement user authorizations through the GeoMesa GeoServer plugin, using PKI certs to
+authenticate with GeoServer and LDAP to store authorizations
 
 <div class="callout callout-warning">
     <span class="glyphicon glyphicon-exclamation-sign"></span>
