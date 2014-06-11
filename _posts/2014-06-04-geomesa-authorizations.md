@@ -108,7 +108,7 @@ public interface AuthorizationsProvider {
 
 When a GeoMesa DataStore is instantiated, it will scan for available service providers.
 Third-party implementations can be enabled by simply placing them in the classpath. See the Oracle
-[javadocs](http://docs.oracle.com/javase/7/docs/api/javax/imageio/spi/ServiceRegistry.html) for
+[Javadoc](http://docs.oracle.com/javase/7/docs/api/javax/imageio/spi/ServiceRegistry.html) for
 details on implementing a service provider.
 
 The GeoMesa DataStore will call 'configure' on the AuthorizationsProvider implementation, passing in
