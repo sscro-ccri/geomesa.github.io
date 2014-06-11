@@ -46,6 +46,7 @@ user can do). For this tutorial, authorization is provided by an LDAP server.
 2.  Apply authorizations to your queries through GeoMesa
 3.  Implement user authorizations through the GeoMesa GeoServer plugin, using PKI certs to
 authenticate with GeoServer and LDAP to store authorizations
+4.  Query GeoServer over WFS using a Java client using PKI certs for authentication
 
 <div class="callout callout-warning">
     <span class="glyphicon glyphicon-exclamation-sign"></span>
@@ -301,6 +302,13 @@ There is a more useful implementation of AuthorizationsProvider that will be exp
 {% highlight java %}
 geomesa.tutorial.LdapAuthorizationsProvider
 geomesa.tutorial.LdapAuthorizationsProviderTest
+{% endhighlight %}
+
+There is a class that shows how to query GeoServer through WFS that will be explored in more detail
+later in the tutorial:
+
+{% highlight java %}
+geomesa.tutorial.GeoServerAuthorizationsTutorial
 {% endhighlight %}
 
 Additionally, there are two helper classes included in the tutorial:
@@ -590,3 +598,95 @@ as the 'scott' user does not have any authorizations set up in LDAP.
 
 *Note: a simple way to use different certificates at once is to open multiple 'incognito' or
 'private' browser windows.*
+
+### Querying GeoServer through WFS with a Java Client
+
+GeoServer provides the ability to query data through a Web Feature Service (WFS). Using GeoTools, we
+can create a client in Java through a WFSDataStore. More details are available
+[here](http://docs.geotools.org/latest/userguide/library/data/wfs.html) and
+[here](http://docs.geoserver.org/stable/en/user/services/wfs/reference.html), although some of the
+documentation is out of date.
+
+We can leverage the same PKI and LDAP setup that we used through the web interface to authenticate
+our client.
+
+Go back to the tutorial folder, and execute the following command:
+
+{% highlight bash %}
+java -cp ./target/geomesa-tutorial-authorizations-1.0.jar \
+   -Djavax.net.ssl.keyStore=/path/to/certs/rod.p12 \
+   -Djavax.net.ssl.keyStorePassword=password \
+   -Djavax.net.ssl.keyStoreType=PKCS12 \
+   -Djavax.net.ssl.trustStore=/path/to/certs/server.jks \
+   -Djavax.net.ssl.trustStorePassword=password \
+   -Djavax.net.ssl.trustStoreType=JKS
+   geomesa.tutorial.GeoServerAuthorizationsTutorial \
+   -geoserverUrl <url> \
+   -featureStore <featureStore> \
+{% endhighlight %}
+
+where you provide the following arguments:
+
+* ```<url>``` - the *HTTPS* path to GeoServer, e.g. "https://localhost:8443/geoserver/"
+* ```<featureStore>``` - the name of the data store created in GeoServer, including the workspace,
+e.g. geomesa:gdelt
+* ```javax.net.ssl.*``` - SSL configuration system properties. Note that these need to be before the
+class name, otherwise they will be treated as arguments to the program.
+
+*Note: ensure that the URL for GeoServer is using HTTPS.*
+
+*Note: the feature store needs to be namespaced with the GeoServer workspace. The workspace and
+store name are separated with a colon.*
+
+*Note: if you happen to have two GeoServer data stores with the same name but different workspaces,
+you will need to delete or rename one of them. There is a bug in GeoServer where it might return
+the wrong features if there are two data stores with the same name.*
+
+The system properties will control the keystore that is used for authentication. For the first command,
+we are using the 'rod' certificate.
+
+Upon execution, you should see the following output:
+
+{% highlight bash %}
+Executing query against 'https://localhost:8443/geoserver/wfs?request=GetCapabilities&version=1.0.0' with client keystore '/path/to/certs/rod.p12'
+INFO: Cached XML schema: https://localhost:8443/geoserver/wfs?service=WFS&version=1.0.0&request=DescribeFeatureType&typeName=geomesa%3Agdelt
+Results:
+1|geom=POINT (33.9744 45.2908)
+{% endhighlight %}
+
+If you re-execute the command, but use the 'scott.p12' cert instead, you should get no results:
+
+{% highlight bash %}
+Executing query against 'https://localhost:8443/geoserver/wfs?request=GetCapabilities&version=1.0.0' with client keystore '/path/to/certs/scott.p12'
+INFO: Cached XML schema: https://localhost:8443/geoserver/wfs?service=WFS&version=1.0.0&request=DescribeFeatureType&typeName=geomesa%3Agdelt
+No results
+{% endhighlight %}
+
+### Insight Into How the Tutorial Works
+
+The code for querying through WFS is available in the following class:
+
+* ```geomesa.tutorial.GeoServerAuthorizationsTutorial```
+
+The interesting code for this tutorial is contained in the 'main' method:
+
+{% highlight java %}
+// create the URL to GeoServer. Note that we need to point to the 'GetCapabilities' request,
+// and that we are using WFS version 1.0.0
+String geoserverUrl = geoserverHost + "wfs?request=GetCapabilities&version=1.0.0";
+
+// create the geotools configuration for a WFS data store
+Map<String, String> configuration = new HashMap<String, String>();
+configuration.put(WFSDataStoreFactory.URL.key, geoserverUrl);
+configuration.put(WFSDataStoreFactory.WFS_STRATEGY.key, "geoserver");
+configuration.put(WFSDataStoreFactory.TIMEOUT.key, cmd.getOptionValue(SetupUtil.TIMEOUT, "99999"));
+
+...
+
+// verify we have gotten the correct datastore
+WFSDataStore wfsDataStore = (WFSDataStore) DataStoreFinder.getDataStore(configuration);
+{% endhighlight %}
+
+This code snippet shows how you can get a GeoTools data store that connects to GeoServer through WFS.
+Once you have obtained the data store, you can query it just like any other data store, and the
+implementation details will be transparent to you.
