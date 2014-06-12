@@ -66,12 +66,12 @@ Before you begin, you should also have these:
 ### GeoMesa Implementation Details - Visibilities
 
 Currently GeoMesa supports applying a single set of visibilities to all data in a DataStore. When
-configuring a DataStore, the visibilities can be set with the ```visibility``` parameter:
+configuring a DataStore, the visibilities can be set with the ```visibilities``` parameter:
 
 {% highlight java %}
 // create a map containing initialization data for the GeoMesa data store
 Map<String, String> configuration = ...
-configuration.put("visibility", "user&admin");
+configuration.put("visibilities", "user&admin");
 DataStore dataStore = DataStoreFinder.getDataStore(configuration);
 {% endhighlight %}
 
@@ -152,7 +152,7 @@ Follow the instructions [here](/2014/04/17/geomesa-gdelt-analysis/), with the fo
 * when executing the map/reduce job, include the following parameter:
 
 {% highlight bash %}
-   -visibility <visibility-label-string>
+   -visibilities <visibility-label-string>
 {% endhighlight %}
 
 The entire command will be as follows:
@@ -163,7 +163,7 @@ hadoop jar /path/to/geomesa-gdelt-1.0-SNAPSHOT.jar \
    -instanceId <accumulo-instance-id>              \
    -zookeepers <zookeeper-hosts-string>            \
    -user <username> -password <password>           \
-   -visibility <visibility-label-string>           \
+   -visibilities <visibility-label-string>           \
    -tableName <table> -featureName <feature>       \
    -ingestFile hdfs:///gdelt/uncompressed/gdelt.tsv
 {% endhighlight %}
