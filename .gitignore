@@ -4,3 +4,4 @@ _site/
 _notes.md
 .idea/**
 *.iml
+*yml~
