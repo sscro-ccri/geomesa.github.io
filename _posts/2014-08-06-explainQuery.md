@@ -14,12 +14,14 @@ code.xml { color:#93a1a1 }
 
 ### Explaining Queries
 
-One of the recent features adds the ability to ask for an explanation of the query plan.  This feature is useful for understanding how a query is executed and also (on occasion) to diagnose errors or curious behavior.  GeoMesa maintains a number of indexes; for any given query, the query planner has to decide what query information should be used and how.  
+We have recently added the ability to ask GeoMesa to explain how it intends to satisfy your query.  This feature is useful for understanding how a query is executed and also (on occasion) to diagnose errors or curious behavior.  GeoMesa maintains a number of indexes; for any given query, the query planner has to decide what query information should be used and how.  
 
 #### Example: Geometric Query 
-To see how this works, let's jump into an example.  Suppose we want to query for all the points in the polygon represented by the WKT "POLYGON ((41 28, 42 28, 42 29, 41 29, 41 28)))".
+To see how this works, let's jump into an example.  Suppose we want to query for all the points in the polygon represented by the !["WKT"](http://en.wikipedia.org/wiki/Well-known_text) "POLYGON ((41 28, 42 28, 42 29, 41 29, 41 28)))".  We can run the explain function from the command line like so.
 
+{% highlight scala %}
 explain --catalog geomesa_catalog --typeName twittersmall --filter "INTERSECTS(geom, POLYGON ((41 28, 42 28, 42 29, 41 29, 41 28)))"
+{% endhighlight %}
 
 Output:
 
@@ -69,7 +71,7 @@ addScanIterator(name:within-NtS{0, priority:200, class:geomesa.core.iterators.Sp
 Query Planning took 398 milliseconds. 
 {% endhighlight %}
 
-The remainder of the output tells us more about how iterators are configured.  In particular, we can see that the SpatioTemporalIntersectingInterator is passed the filter string "INTERSECTS(geom, POLYGON ((41 28, 42 28, 42 29, 41 29, 41 28)))".  Also, we can see how long GeoMesa took to plan the query.  
+The remainder of the output tells us more about how iterators are configured.  In particular, we can see that the SpatioTemporalIntersectingInterator is passed the filter string "INTERSECTS(geom, POLYGON ((41 28, 42 28, 42 29, 41 29, 41 28)))".  Finally, we can see how long GeoMesa took to plan the query.  
 
 #### Example: Attribute and Geometry Query (on an attribute which is indexed) 
 For our next example, let's consider querying for the filter "tweet_id = '123456' AND WITHIN(geom, POLYGON ((45 23, 48 23, 48 27, 45 27, 45 23)))".
@@ -96,7 +98,7 @@ addScanIterator(name:sffilter->H42w, priority:300, class:geomesa.core.iterators.
 Query Planning took 3 milliseconds.
 {% endhighlight %}
 
-Here we can notice that a range is being set for exactly our tweet's id.  As a quick contrast, let's try get the explanation for this query "user_name = 'Jim' AND WITHIN(geom, POLYGON ((45 23, 48 23, 48 27, 45 27, 45 23)))".
+Here we can notice that a range is being set for exactly our tweet's id.  As a quick contrast, let's look at the explanation for this query "user_name = 'Jim' AND WITHIN(geom, POLYGON ((45 23, 48 23, 48 27, 45 27, 45 23)))".
 
 #### Example: Attribute and Geometry Query (on an attribute which is not indexed) 
 
@@ -106,7 +108,7 @@ Filter is rewritten as [[ user_name = Jim ] AND [ geom within POLYGON ((45 23, 4
 Scanning ST index table for feature type twitter
 {% endhighlight %}
 
-Just like in the second example, we had an attribute equality, but we aren't using a (presumably faster) attribute-index approach.  So what gives?  For our particular twitter table, we decided to index on some attributes, but not others.  For this case, we have indexed 'tweet_id', but not 'user_name'.  
+Just like in the second example, we had an attribute equality, but we are not using a (presumably faster) attribute-index approach.  Why not?  For our particular twitter table, we decided to index on some attributes, but not others.  For this case, we have indexed 'tweet_id', but not 'user_name'.  
 
 
 (Suppressed output similar to the first example.)
@@ -129,5 +131,5 @@ Query Planning took 68 milliseconds.
 
 Here we can see that SimpleFeatureFilteringIterator is being used to apply our attribute filter later (user_name = 'Jim').
 
-As a recap, in our first example, we looked at how the query planner handled a simple geometric query.  In the next two examples, we were able to see the query planner choose to use an attribute index when it was available to run a more efficient query.  In the long-term, we plan to store aggregate data to inform certain more complex query planning decisions.  As that is built out, we will continue to extend the 'explainQuery' functionality.
+As a recap, in our first example, we looked at how the query planner handled a simple geometric query.  In the next two examples, we were able to see the query planner choose to use an attribute index when it was available to run a more efficient query.  In the long-term, we plan to store aggregate data to inform more complex query planning decisions.  As that is built out, we will continue to extend the 'explainQuery' functionality.
 
