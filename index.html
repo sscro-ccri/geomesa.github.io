@@ -55,7 +55,59 @@ layout: default
                 <!--<li>query-planning optimizations</li>-->
             <!--</ul>-->
             </section>
+            <section id="community">
+                <h2>Get Involved</h2>
+                   <p>The GeoMesa project welcomes contributions from anyone interested.</p>
+
+                    <p>Join our <a href="https://dev.locationtech.org/mailman/listinfo/geomesa-users">user</a> and <a href="https://dev.locationtech.org/mailman/listinfo/geomesa-dev">developer</a> email lists.</p>
+            </section>
+            <section id="bugs-support">
+                <h2>Bugs and Support</h2>
+                <p>For bug reports, additional support, and other issues, send an email to the GeoMesa <a href="mailto:geomesa-users@locationtech.org">listserv</a>.</p>
+                    <p>Professional support is offered by <a href="http://www.ccri.com/contact/geomesa-information-request/">CCRi</a>.</p>
+            </section>
+            <section id="FAQ">
+                <h2>Frequently Asked Questions</h2>
+                <h3>What is the best way to ingest data into GeoMesa?</h2>
+                <p>The GeoMesa command line tools provide an easy way to ingest data in
+                   variety of formats. Tools distributions are provided for all major
+                   back-end implemenations. See the user guide for information on setting
+                   up the command line tools:
+                   <a href="http://www.geomesa.org/documentation/user/install.html">Installation</a>
+                </p>
+
+                <a name="queries-hang"></a>
+                <h3>Why do my queries hang (never finish)?</h2>
+                <p>Although it is possible to request such a large number of records
+                that queries timeout or appear never to finish, the far more frequent cause of this
+                behavior is a mis-configured cloud.  Check to be sure that ports are open on
+                all nodes; that clock-time is reasonably consistent among the nodes; and
+                that all software versions are the same across your cluster.</p>
+
+                <a name="tables-naming-convention"></a>
+                <h3>Why are there multiple tables for my one feature?</h2>
+                <p>GeoMesa supports secondary indexes, and we do this by using
+                multiple support tables per feature (or group of features). See
+                <a href="http://www.geomesa.org/documentation/user/datastores/index_overview.html">Index Overview</a>
+                for a discussion of the various indices used by GeoMesa.</p>
+
+                <a name="epsg-acls"></a>
+                <h3>Why is my CRS not being read?</h2>
+                <p>If the GeoTools packages for reading EPSG data are on your classpath,
+                review the permissions on your temporary directory. If multiple users share
+                an environment, the temporary directory containing EPSG data
+                can be owned by a different user.</p>
+                <p>Another option is to ensure that you are using your own, specific
+                directory.  To do that, include <code>-Djava.io.tmpdir=/tmp/YourUsername</code>
+                (substituting your username) when running a JVM.</p>
+
+                <a name="geotools-spi"></a>
+                <h3>What do I need to do to include GeoMesa in a shaded JAR?</h2>
+                <p>If you rebundle GeoMesa as part of a larger project's JAR file,
+                it is important to ensure that the manifest includes the proper
+                entries for the service-provider interfaces (SPIs); otherwise, the
+                various factories will be unable to find the implementations you
+                expect.</p>
+            </section>
 
         </div>
-
-
