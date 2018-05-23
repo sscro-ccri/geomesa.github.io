@@ -5938,21 +5938,24 @@ overflow:hidden;
 footer {    /* added by bducharme */
   background: #f2e7df ;
 }
+#FAQ {
+    padding-bottom: 25px;
+}
 
 section:nth-child(even) {
-    background-color: #ececec;
+    background-color: #f2e7df;
 /* bducharme: section elements are contained within the big div, but we want
        the background color to extend to the left and right edge (and a little below). */
-    padding-left: 200px;
-    margin-left: -200px;
-    padding-right: 200px;
-    margin-right: -200px;
+    padding-left: 20px;
+    margin-left: -20px;
+    padding-right: 20px;
+    margin-right: -20px;
     padding-bottom: 20px;
     margin-bottom: -20px;
 }
 
-.tagline{margin-bottom:0;border:0;-webkit-border-radius:0;border-radius:0;text-align:center; padding-bottom: 30px; background-color:#821C09;} /*apm remove background */
-.tagline h2{margin:0;padding:40px 0 0 0;font-size:24px; font-family:"Roboto Condensed"; color:#f2e7df;} /* apm edit font-size, padding, color, font */
+.tagline{margin-bottom:0;border:0;-webkit-border-radius:0;border-radius:0;text-align:center; padding-bottom: 30px;} /*apm remove background */
+.tagline h2{margin:0;padding:40px 0 0 0;font-size:24px; font-family:"Roboto Condensed"; color:#821C09;} /* apm edit font-size, padding, color, font */
 
 section h2 {  /* bducharme */
   text-transform: uppercase;
