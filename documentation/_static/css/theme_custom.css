@@ -2,7 +2,7 @@
 
 /* Add overrides of theme.css rules below */
 body {
-   color: #bbb;
+   color: #565656;
 }
 
 .wy-alert.wy-alert-neutral a,.rst-content .wy-alert-neutral.note a,.rst-content .wy-alert-neutral.attention a,.rst-content .wy-alert-neutral.caution a,.rst-content .wy-alert-neutral.danger a,.rst-content .wy-alert-neutral.error a,.rst-content .wy-alert-neutral.hint a,.rst-content .wy-alert-neutral.important a,.rst-content .wy-alert-neutral.tip a,.rst-content .wy-alert-neutral.warning a,.rst-content .wy-alert-neutral.seealso a,.rst-content .wy-alert-neutral.admonition-todo a {
@@ -107,21 +107,21 @@ code,.rst-content tt,.rst-content code {
 
 /* non-active second+ level headers */
 .wy-menu-vertical li.current a {
-  color: #bbb;
-  background: #535353;
+  color: #fff;
+  background: #ad7a57;
   border-right: solid 1px #535353;
 }
 
 /* non-active second+ level headers - hover */
 .wy-menu-vertical li.current a:hover {
-  color: #333;
-  background: #b0b0b0;
+background-color: #f2e7df;
+color: #821C09;
 }
 
 /* active first level headers */
 .wy-menu-vertical li.toctree-l1.current > a, .wy-menu-vertical li.toctree-l1.current > a:hover {
-  color: #e6a150;
-  background: #333;
+  color: #fff;
+  background: #565656;
   border-right: solid 1px #333;
   border-bottom: 1px solid #333;
   border-top: 1px solid #333;
@@ -129,8 +129,8 @@ code,.rst-content tt,.rst-content code {
 
 /* active second+ level headers */
 .wy-menu-vertical li.toctree-l2.current > a, .wy-menu-vertical li.toctree-l2.current li.toctree-l3 > a, .wy-menu-vertical li.toctree-l2.current li.toctree-l4 > a {
-  color: #bbb;
-  background: #434242;
+  color: #fff;
+  background: #565656;
   border-right: solid 1px #434242;
 }
 
@@ -145,13 +145,15 @@ code,.rst-content tt,.rst-content code {
   background: #b0b0b0;
 }
 
-
+.wy-menu-vertical a:hover {
+    background: none;
+}
 .wy-menu-vertical a:active {
-  background-color: #E6A150;
+  background-color: none;
 }
 
 .wy-side-nav-search {
-  background-color: #111;
+  background-color: #f2e7df;
   color: #e6a150;
 }
 
@@ -168,19 +170,15 @@ code,.rst-content tt,.rst-content code {
 }
 
 .wy-side-nav-search input[type=text] {
-  background-color: #e3e3e3;
+  background-color: #fff;
 }
 
 .wy-nav-side {
-  background-color: #111;
+  background-color: #f2e7df;
 }
 
 .wy-nav .wy-menu-vertical header {
    color: #E6A150
-}
-
-.wy-nav .wy-menu-vertical a:hover {
-   background-color: #E6A150;
 }
 
 .wy-body-for-nav {
@@ -196,11 +194,11 @@ code,.rst-content tt,.rst-content code {
 }
 
 .wy-nav-content {
-   background: #333;
+   background: #fff;
 }
 
 .wy-nav-content-wrap {
-   background: #333;
+   background: #fff;
 }
 
 @media screen and (max-width: 768px) {
@@ -233,7 +231,7 @@ code,.rst-content tt,.rst-content code {
 }
 
 .rst-content tt.literal,.rst-content tt.literal,.rst-content code.literal {
-   color: #E26767
+   color: #fff
 }
 .rst-content a tt,.rst-content a tt,.rst-content a code {
    color: #E6A150
@@ -244,36 +242,27 @@ code,.rst-content tt,.rst-content code {
 }
 
 a {
-   color: #e6a150;
+   color: #76323F;
 }
 
 a:visited {
-   color: #e6a150;
+   color: #76323F;
 }
 
 a:hover {
-   color: #e6a150;
-}
-
-a.icon-home, a.icon-home:hover, a.icon-home:visited {
-   /* i.e. for the house icon and "GeoMesa" in the top, don't change color when visited */
-   color: #e6a150;
+   color: #B69295;
 }
 
 .pre {
-   background: #444;
+   background: #ad7a57;
 }
 
 div.highlight pre {
-   background: #d6d6d6;
+   background: #f2e7df;
 }
 
 code.docutils {
-   background: #444;
-}
-
-code.literal {
-   background: #444;
+   background: #ad7a57;
 }
 
 .rst-content .warning .admonition-title {
@@ -281,7 +270,7 @@ code.literal {
 }
 
 div.admonition.warning, div.admonition.note {
-   background: #555;
+   background: #f2e7df;
 }
 
 .wy-table-responsive th.head {
@@ -289,7 +278,7 @@ div.admonition.warning, div.admonition.note {
 }
 
 .wy-table-responsive tr.row-even td {
-   background-color: #555 !important;
+   background-color: #f2e7df !important;
 }
 
 .wy-table-responsive tr.row-odd td {

@@ -21,7 +21,7 @@ permalink: :title/
 highlighter: rouge
 
 authors:
-    anthony: 
+    anthony:
         display_name: Anthony Fox
     hunter:
         display_name: Hunter Provyn
@@ -53,4 +53,3 @@ gems:
 
 telist:
   - jekyll-redirect-from
-

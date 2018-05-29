@@ -172,7 +172,7 @@ code,.rst-content tt,.rst-content code {
 }
 
 .wy-nav-side {
-  background-color: #111;
+  background-color: #f2e7df;
 }
 
 .wy-nav .wy-menu-vertical header {
@@ -196,11 +196,11 @@ code,.rst-content tt,.rst-content code {
 }
 
 .wy-nav-content {
-   background: #333;
+   background: #fff;
 }
 
 .wy-nav-content-wrap {
-   background: #333;
+   background: #fff;
 }
 
 @media screen and (max-width: 768px) {
