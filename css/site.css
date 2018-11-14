@@ -484,7 +484,6 @@ p {
   .lead {
     font-size: 18px;
     font-weight: 300; /* apm edit font from 21px */
-    font-family: "Roboto"; /* apm add font */
   }
 }
 small,
@@ -3044,7 +3043,7 @@ input[type="button"].btn-block {
   height: 1px;
   margin: 9px 0;
   overflow: hidden;
-  background-color: #e5e5e5;
+  background-color: #76323F;
 }
 .dropdown-menu > li > a {
   display: block;
@@ -3963,7 +3962,7 @@ select[multiple].input-group-sm > .input-group-btn > .btn {
 }
 .navbar-default .navbar-nav > li > a:hover,
 .navbar-default .navbar-nav > li > a:focus {
-  color: #76323F;                        /* bducharme was 333 */
+  color: #B69295;                        /* bducharme was 333 */
   background-color: transparent;
 }
 .navbar-default .navbar-nav > .active > a,
@@ -3979,29 +3978,29 @@ select[multiple].input-group-sm > .input-group-btn > .btn {
   background-color: transparent;
 }
 .navbar-default .navbar-toggle {
-  border-color: #ddd;
+  border-color: none;
 }
 .navbar-default .navbar-toggle:hover,
 .navbar-default .navbar-toggle:focus {
-  background-color: #444;  /* bducharme was ddd */
+  background-color: none;  /* bducharme was ddd */
 }
 .navbar-default .navbar-toggle .icon-bar {
-  background-color: #888;
+  background-color: #821C09;
 }
 
 .navbar-default .navbar-nav > .open > a,
 .navbar-default .navbar-nav > .open > a:hover,
 .navbar-default .navbar-nav > .open > a:focus {
-  color: #76323F;             /* bducharme was #555; */
+  color: #B69295;             /* bducharme was #555; */
   background-color: #f2e7df; /* bducharme lighter gray; was #e7e7e7; */
 }
 @media (max-width: 767px) {
   .navbar-default .navbar-nav .open .dropdown-menu > li > a {
-    color: #eee; /* bducharme was #777; */
+    color: #76323F; /* bducharme was #777; */
   }
   .navbar-default .navbar-nav .open .dropdown-menu > li > a:hover,
   .navbar-default .navbar-nav .open .dropdown-menu > li > a:focus {
-    color: #fff;    /* bducharme was #333 */
+    color: #B69295;    /* bducharme was #333 */
     background-color: transparent;
   }
   .navbar-default .navbar-nav .open .dropdown-menu > .active > a,
@@ -5874,14 +5873,14 @@ green     #859900  operators, other keywords
 .highlight .vi { color: #268bd2 } /* Name.Variable.Instance */
 .highlight .il { color: #2aa198 } /* Literal.Number.Integer.Long */
 body{background:#fff;color:#002b36;font-size:15px;line-height:1.7;}
-body a{color:#76323F;} /* apm change link color to lighter from #e6810a */
+body a{color:#A53824;} /* apm change link color to lighter from #e6810a */
 body a:hover{color:#B69295;text-decoration:none}body code{font-weight:bold;}body .well{background:#232323;margin:20px 0;border:1px solid #333;color:#ddd;}body .well strong{color:#f5f5f5}
 h1{color:#811c09}
 h2{color:#953f32} /* apm change color to brighter orange from #f5deb3 */
-h3{color:#ad7a57}
+h3{color:#7d573c}
 h4{color:#f5f5f5;margin-top:30px} /* apm remove bold */
-.logo{padding-top:20px;text-align:center;margin:0;background-color:#f2e7df;} /*apm remove background */
-.logo a{text-indent:-9999px;display:block;margin:0 auto;width:300px;height:300px;background:url("../img/geomesa.png") center no-repeat;-webkit-background-size:contain;-moz-background-size:contain;background-size:contain; background-color:transparent;} /*apm add background transparent */
+.logo{padding-top:20px; padding-bottom: 35px;text-align:center;margin:0;background-color:#f2e7df;} /*apm remove background */
+.logo a{text-indent:-9999px;display:block;margin:0 auto;width:280px;height:114px;background:url("../img/geomesa.png") center no-repeat;-webkit-background-size:contain;-moz-background-size:contain;background-size:contain; background-color:transparent;} /*apm add background transparent */
 
 /* bducharme removed padding-bottom:50px from the following */
 .page-content{position:relative;padding-top:180px;}.
@@ -5946,10 +5945,10 @@ section:nth-child(even) {
     background-color: #f2e7df;
 /* bducharme: section elements are contained within the big div, but we want
        the background color to extend to the left and right edge (and a little below). */
-    padding-left: 20px;
-    margin-left: -20px;
-    padding-right: 20px;
-    margin-right: -20px;
+    padding-left: 200px;
+    margin-left: -200px;
+    padding-right: 200px;
+    margin-right: -200px;
     padding-bottom: 20px;
     margin-bottom: -20px;
 }

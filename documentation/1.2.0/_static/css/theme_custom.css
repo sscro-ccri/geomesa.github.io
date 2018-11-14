@@ -106,10 +106,6 @@ code,.rst-content tt,.rst-content code {
    background: #333
 }
 
-.wy-menu-vertical a:active {
-   background-color: #E6A150;
-}
-
 .wy-side-nav-search {
    background-color: #E6A150;
    color: #333;
@@ -124,7 +120,7 @@ code,.rst-content tt,.rst-content code {
 }
 
 .wy-side-nav-search>div.version {
-   color: #666;
+   color: #565656;
 }
 
 .wy-nav .wy-menu-vertical header {
@@ -196,7 +192,7 @@ code,.rst-content tt,.rst-content code {
 }
 
 a {
-   color: #e6a150;
+   color: #A53824;
 }
 
 a:visited {

@@ -149,7 +149,8 @@ color: #821C09;
     background: none;
 }
 .wy-menu-vertical a:active {
-  background-color: none;
+  background: none;
+  color: #A53824;
 }
 
 .wy-side-nav-search {
@@ -166,7 +167,7 @@ color: #821C09;
 }
 
 .wy-side-nav-search>div.version {
-  color: #bbb;
+  color: #565656;
 }
 
 .wy-side-nav-search input[type=text] {
@@ -242,11 +243,11 @@ color: #821C09;
 }
 
 a {
-   color: #76323F;
+   color: #A53824;
 }
 
 a:visited {
-   color: #76323F;
+   color: #A53824;
 }
 
 a:hover {
